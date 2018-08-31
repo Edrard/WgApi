@@ -1,6 +1,5 @@
-# ATM
-MultiDemensinal Array to Mysql converter
-Using Pixie Query Builder as SQL Driver
+# WgApi
+Simple URL generator for WG Api
 
 Simple Example
 ```
