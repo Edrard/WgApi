@@ -1,6 +1,6 @@
 {
     "name": "edrard/WgApi",
-    "description": "Get data from WG Api",
+    "description": "generate WG Api Url",
     "type": "library",
     "license": "MIT",
     "authors": [{
