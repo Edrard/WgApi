@@ -6,6 +6,7 @@ use edrard\Log\MyLog;
 class GetWgApi
 { 
     protected $config = FALSE;
+    protected $prefix = '';
     protected $methods = array(
         'getPlayerTankStat' => array( 'type' => 'account/tanks','max' => '100'),
         'getPlayerId' => array( 'type' => 'account/list','max' => '1'),
@@ -31,6 +32,12 @@ class GetWgApi
     public function changeIds(array $ids = array()){
         !empty($ids) ? $this->config['id'] = $ids : '';    
     }
+    public function changePrefix($prefix){
+        $this->prefix = $prefix;
+    }
+        public function getPrefix(){
+        return $this->prefix;
+    }
     protected function addId($server,&$fields){
         $fields['application_id'] = $this->config['id'][$server];
         return $fields;
@@ -49,12 +56,14 @@ class GetWgApi
     private function prepeare($type, $server, array $id, array $extra = array(),$max = FALSE, $account_add = 'account_id'){
         $max = $this->maxInOneLink($type,$max);
         $return = [];
+        $i = 0;
         foreach(array_chunk($id, $max) as $vals){
-            $return[] = $this->simpleRun(
+            $return[$this->prefix.$i] = $this->simpleRun(
                 $this->methods[$type]['type'],
                 $server,
                 $this->accountAdd($extra,$vals,$account_add)
             );
+            $i++;
         }
         return $return;
     }
