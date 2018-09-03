@@ -7,11 +7,11 @@ class GetWgApi
 { 
     protected $config = FALSE;
     protected $methods = array(
-        'getPlayerTankStat' => 'account/tanks',
-        'getPlayerId' => 'account/list',
-        'getPlayerStat' => 'account/info',
-        'getPlayerAchiv' => 'account/achievements',
-        'getPlayerTankStatFull' => 'tanks/stats',
+        'getPlayerTankStat' => array( 'type' => 'account/tanks','max' => '100'),
+        'getPlayerId' => array( 'type' => 'account/list','max' => '1'),
+        'getPlayerStat' => array( 'type' => 'account/info','max' => '100'),
+        'getPlayerAchiv' => array( 'type' => 'account/achievements','max' => '100'),
+        'getPlayerTankStatFull' => array( 'type' => 'tanks/stats','max' => '1'),
     );
     function __construct(array $ids = array(), array $config = array())
     {  
@@ -35,6 +35,9 @@ class GetWgApi
         $fields['application_id'] = $this->config['id'][$server];
         return $fields;
     }
+    protected function maxInOneLink($type,$max){
+        return $max !== FALSE ? min(abs($max),$this->methods[$type]['max']) : $this->methods[$type]['max'];    
+    }
     public function getUrl($server, $type, $target, $fields){
         $this->addId($server,$fields);
         $fields['language'] = !isset($fields['language']) ? $this->config['lang'][$server] : $fields['language'];
@@ -43,33 +46,40 @@ class GetWgApi
         MyLog::info("Generated URL - ".$url,array(),'wgapi');
         return $url;
     }
-    public function getPlayerId($server,$name,array $extra = array()){
-        $extra = array_special_merge(array('search' => $name),$extra);
-        return $this->simpleRun($this->methods[__FUNCTION__],$server,$extra);
+    private function prepeare($type, $server, array $id, array $extra = array(),$max = FALSE, $account_add = 'account_id'){
+        $max = $this->maxInOneLink($type,$max);
+        $return = [];
+        foreach(array_chunk($id, $max) as $vals){
+            $return[] = $this->simpleRun(
+                $this->methods[$type]['type'],
+                $server,
+                $this->accountAdd($extra,$vals,$account_add)
+            );
+        }
+        return $return;
     }
-    public function getPlayerStat($server,array $id, array $type = array(), array $extra = array()){
+    public function getPlayerId($server,array $name,array $extra = array(),$max = FALSE){
+        return $this->prepeare(__FUNCTION__,$server, $name, $extra ,$max,'search');
+    }
+    public function getPlayerStat($server,array $id, array $type = array(), array $extra = array(),$max = FALSE){
         !empty($type) ? $extra['extra'] = implode(',', $type) : '';
-        $this->accountIdAdd($extra,$id);
-        return $this->simpleRun($this->methods[__FUNCTION__],$server,$extra); 
+        return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max); 
     }
-    public function getPlayerTankStat($server, array $id, array $extra = array()){
-        $this->accountIdAdd($extra,$id);
-        return $this->simpleRun($this->methods[__FUNCTION__],$server,$extra);
+    public function getPlayerTankStat($server, array $id, array $extra = array(),$max = FALSE){
+        return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max); 
     }
-    public function getPlayerTankStatFull($server, array $id, array $type = array(), array $extra = array()){
+    public function getPlayerTankStatFull($server, array $id, array $type = array(), array $extra = array(),$max = FALSE){
         !empty($type) ? $extra['extra'] = implode(',', $type) : '';
-        $this->accountIdAdd($extra,$id);
-        return $this->simpleRun($this->methods[__FUNCTION__],$server,$extra); 
+        return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max);  
     }
-    public function getPlayerAchiv($server, array $id, array $extra = array()){
-        $this->accountIdAdd($extra,$id);
-        return $this->simpleRun($this->methods[__FUNCTION__],$server,$extra);  
+    public function getPlayerAchiv($server, array $id, array $extra = array(),$max = FALSE){
+        return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max);  
     }
     private function simpleRun($uri,$server, array $extra = array(),$type = 'wot'){
         return $this->getUrl($server, $type, $uri, $extra);
     }
-    private function accountIdAdd(&$extra, array $id){
-        $extra = array_special_merge(array('account_id' => implode(',',$id)),$extra);
+    private function accountAdd($extra, array $id, $type = 'account_id'){
+        $extra = array_special_merge(array($type => trim(implode(',',$id),',')),$extra); 
         return $extra;
     }
     private function createRequest($fields){
