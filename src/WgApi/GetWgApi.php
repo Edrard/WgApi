@@ -17,7 +17,7 @@ class GetWgApi
     function __construct(array $ids = array(), array $config = array())
     {  
         MyLog::init('logs','wgapi');
-        MyLog::changeType(array('warning','error','critical'));
+        MyLog::changeType(array('warning','error','critical'),'wgapi');
         $this->config = !empty($config) ? $config : include 'config.php';
         $this->changeIds($ids);
     }
