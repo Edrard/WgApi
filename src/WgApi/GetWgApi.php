@@ -8,10 +8,10 @@ class GetWgApi
     protected $config = FALSE;
     protected $prefix = '';
     protected $methods = array(
-        'getPlayerTankStat' => array( 'type' => 'account/tanks','max' => '100'),
+        'getPlayerTankStat' => array( 'type' => 'account/tanks','max' => '25'),
         'getPlayerId' => array( 'type' => 'account/list','max' => '1'),
-        'getPlayerStat' => array( 'type' => 'account/info','max' => '100'),
-        'getPlayerAchiv' => array( 'type' => 'account/achievements','max' => '100'),
+        'getPlayerStat' => array( 'type' => 'account/info','max' => '25'),
+        'getPlayerAchiv' => array( 'type' => 'account/achievements','max' => '25'),
         'getPlayerTankStatFull' => array( 'type' => 'tanks/stats','max' => '1'),
     );
     function __construct(array $ids = array(), array $config = array())
