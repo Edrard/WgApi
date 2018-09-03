@@ -32,10 +32,10 @@ class GetWgApi
     public function changeIds(array $ids = array()){
         !empty($ids) ? $this->config['id'] = $ids : '';    
     }
-    public function changePrefix($prefix){
+    public function changeUrlPrefix($prefix){
         $this->prefix = $prefix;
     }
-        public function getPrefix(){
+    public function getUrlPrefix(){
         return $this->prefix;
     }
     protected function addId($server,&$fields){
