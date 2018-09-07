@@ -73,12 +73,11 @@ class GetWgApi
     * @param array $id
     * @param string $server
     */
-    public function addServerBaseId(array $id,$server){
+    public function addServerBaseId(array &$id,$server){
         $add = $this->config['start'][$server];
         array_walk($id, function(&$val, $key) use($add) {
             $val += $add;        
         });    
-        return $id;
     }
     public function getPlayerId($server,array $name,array $extra = array(),$max = FALSE){
         return $this->prepeare(__FUNCTION__,$server, $name, $extra ,$max,'search');
