@@ -112,14 +112,14 @@ class GetWgApi
         !empty($type) ? $extra['extra'] = implode(',', $type) : '';
         return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max); 
     }
-    public function getPlayerTankStat($server, array $id, array $extra = array(),$max = FALSE){
+    public function getPlayerTankStat($server, array $id, array $type = array(), array $extra = array(),$max = FALSE){
         return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max); 
     }
     public function getPlayerTankStatFull($server, array $id, array $type = array(), array $extra = array(),$max = FALSE){
         !empty($type) ? $extra['extra'] = implode(',', $type) : '';
         return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max);  
     }
-    public function getPlayerAchiv($server, array $id, array $extra = array(),$max = FALSE){
+    public function getPlayerAchiv($server, array $id, array $type = array(), array $extra = array(),$max = FALSE){
         return $this->prepeare(__FUNCTION__,$server, $id, $extra ,$max);  
     }
     private function simpleRun($uri,$server, array $extra = array(),$type = 'wot'){
