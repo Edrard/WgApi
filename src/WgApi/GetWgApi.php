@@ -14,11 +14,37 @@ class GetWgApi
         'getPlayerAchiv' => array( 'type' => 'account/achievements','max' => '25'),
         'getPlayerTankStatFull' => array( 'type' => 'tanks/stats','max' => '1'),
     );
+    protected $base_config = array(
+        'url' => array (
+            'eu' => 'http://api.worldoftanks.eu', 
+            'ru' => 'http://api.worldoftanks.ru',
+            'us' => 'http://api.worldoftanks.com',
+            'sea' => 'http://api.worldoftanks.asia'
+        ),
+        'lang' => array(
+            'ru' => 'ru',
+            'eu' => 'en',
+            'us' => 'en',
+            'sea' => 'en'
+        ),
+        'start' => array (
+            'ru' => 0,
+            'eu' => 500000000,
+            'us' => 1000000000,
+            'sea' => 2000000000
+        ),
+        'id' => array(
+            'ru' => 'dafa3ba4693d63929563682357e26742',
+            'eu' => 'dafa3ba4693d63929563682357e26742',
+            'us' => 'dafa3ba4693d63929563682357e26742',
+            'sea' => 'dafa3ba4693d63929563682357e26742'
+        ),
+    );
     function __construct(array $ids = array(), array $config = array())
     {  
         MyLog::init('logs','wgapi');
         MyLog::changeType(array('warning','error','critical'),'wgapi');
-        $this->config = !empty($config) ? $config : include 'config.php';
+        $this->config = !empty($config) ? $config : $this->base_config;
         $this->changeIds($ids);
     }
     /**
