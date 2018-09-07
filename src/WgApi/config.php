@@ -14,7 +14,7 @@ return array(
         'sea' => 'en'
     ),
     'start' => array (
-        'ru' => 1,
+        'ru' => 0,
         'eu' => 500000000,
         'us' => 1000000000,
         'sea' => 2000000000

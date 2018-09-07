@@ -67,6 +67,19 @@ class GetWgApi
         }
         return $return;
     }
+    /**
+    * Adding to id array server specific base
+    * 
+    * @param array $id
+    * @param string $server
+    */
+    public function addServerBaseId(array $id,$server){
+        $add = $this->config['start'][$server];
+        array_walk($id, function(&$val, $key) use($add) {
+            $val += $add;        
+        });    
+        return $id;
+    }
     public function getPlayerId($server,array $name,array $extra = array(),$max = FALSE){
         return $this->prepeare(__FUNCTION__,$server, $name, $extra ,$max,'search');
     }
