@@ -1,31 +1,50 @@
 {
-    "name": "edrard/WgApi",
-    "description": "generate WG Api Url",
-    "type": "library",
-    "license": "MIT",
-    "authors": [{
-        "name": "Edrard",
-        "email": "demonand@gmail.com"
-    }],
-    "repositories": [
-        {
-            "type": "git",
-            "url": "https://github.com/Edrard/function.git"
-        },
-        {
-            "type": "git",
-            "url": "https://github.com/Edrard/MyLog.git"
-        }
-    ],
+    "name": "edrard/wgapi",
+    "description": "Validated Wargaming API URL and batch builder for PHP 8.5",
     "require": {
-        "php": ">=5.4.0",
-        "edrard/function": "dev-master",
-        "edrard/MyLog": "dev-master"
-        
+        "php": "^8.5",
+        "ext-ctype": "*",
+        "ext-filter": "*"
     },
     "autoload": {
         "psr-4": {
-            "edrard\\WgApi\\": "src/WgApi"
+            "edrard\\WgApi\\": "src/WgApi/"
         }
+    },
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Edrard"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^12.5",
+        "phpstan/phpstan": "^2.1",
+        "friendsofphp/php-cs-fixer": "^3.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "edrard\\Tests\\WgApi\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "format": "php-cs-fixer fix",
+        "format:check": "php-cs-fixer fix --dry-run --diff"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.0.x-dev"
+        }
+    },
+    "homepage": "https://github.com/Edrard/WgApi",
+    "support": {
+        "source": "https://github.com/Edrard/WgApi",
+        "issues": "https://github.com/Edrard/WgApi/issues"
     }
 }
