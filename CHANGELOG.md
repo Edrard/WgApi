@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — planned 2.0.1
+
+- Preserve authenticated HTTPS GET support and protect query/extra arguments in exception traces with SensitiveParameter.
+- Reject control characters and backslashes in configured origins and mark query/extra arguments sensitive in stack traces.
+- Add security regression tests and PHP 8.5 CI with PSR-12, PHPStan, Composer and dependency audit checks.
+
 ## 2.0.0 — 2026-09-27
 
 Major migration from the legacy PHP 5.4 code; requires PHP 8.5.

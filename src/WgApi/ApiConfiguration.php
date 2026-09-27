@@ -33,7 +33,8 @@ final class ApiConfiguration
                     $parts = is_string($value) ? parse_url($value) : false;
                     if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])
                         || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
-                        || !in_array($parts['path'] ?? '', ['', '/'], true)) {
+                        || !in_array($parts['path'] ?? '', ['', '/'], true)
+                        || preg_match('/[\x00-\x20\x7f\\\\]/', $value)) {
                         throw new InvalidArgumentException('API base URL must be an HTTPS origin.');
                     }
                     $value = rtrim($value, '/');

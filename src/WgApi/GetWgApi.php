@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace edrard\WgApi;
 
 use InvalidArgumentException;
+use SensitiveParameter;
 
 /** Existing method names over a validated, extensible URL builder. */
 class GetWgApi implements UrlBuilderInterface
@@ -62,7 +63,7 @@ class GetWgApi implements UrlBuilderInterface
     /**
      * @param array<array-key, mixed> $fields
      */
-    public function getUrl(string $server, string $type, string $target, array $fields = []): string
+    public function getUrl(string $server, string $type, string $target, #[SensitiveParameter] array $fields = []): string
     {
         Endpoint::validatePath($type);
         Endpoint::validatePath($target);
@@ -70,7 +71,7 @@ class GetWgApi implements UrlBuilderInterface
         $fields['application_id'] = $this->configuration->applicationId($realm);
         $fields['language'] ??= $this->configuration->language($realm);
         foreach ($fields as $key => &$value) {
-            if (!is_string($key) || $key === '') {
+            if (!is_string($key) || $key === '' || preg_match('/[\x00-\x1f\x7f]/', $key)) {
                 throw new InvalidArgumentException('Query parameter names must be non-empty strings.');
             }
             if (is_array($value)) {
@@ -95,7 +96,7 @@ class GetWgApi implements UrlBuilderInterface
      * @param array<array-key, mixed> $extra
      * @return array<int|string, string>
      */
-    public function prepareBatch(string $method, string $server, array $ids, array $types = [], array $extra = [], int|false $max = false): array
+    public function prepareBatch(string $method, string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
     {
         $endpoint = $this->endpoints[$method] ?? throw new InvalidArgumentException('Unknown endpoint: '.$method);
         Realm::resolve($server);
@@ -143,7 +144,7 @@ class GetWgApi implements UrlBuilderInterface
      * @param array<array-key, mixed> $extra
      * @return array<int|string, string>
      */
-    public function getPlayerId(string $server, array $names, array $extra = [], int|false $max = false): array
+    public function getPlayerId(string $server, array $names, #[SensitiveParameter] array $extra = [], int|false $max = false): array
     {
         return $this->prepareBatch(__FUNCTION__, $server, $names, [], $extra, $max);
     }
@@ -153,7 +154,7 @@ class GetWgApi implements UrlBuilderInterface
      * @param array<array-key, mixed> $extra
      * @return array<int|string, string>
      */
-    public function getPlayerStat(string $server, array $ids, array $types = [], array $extra = [], int|false $max = false): array
+    public function getPlayerStat(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
     {
         return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
     }
@@ -163,7 +164,7 @@ class GetWgApi implements UrlBuilderInterface
      * @param array<array-key, mixed> $extra
      * @return array<int|string, string>
      */
-    public function getPlayerTankStat(string $server, array $ids, array $types = [], array $extra = [], int|false $max = false): array
+    public function getPlayerTankStat(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
     {
         return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
     }
@@ -173,7 +174,7 @@ class GetWgApi implements UrlBuilderInterface
      * @param array<array-key, mixed> $extra
      * @return array<int|string, string>
      */
-    public function getPlayerTankStatFull(string $server, array $ids, array $types = [], array $extra = [], int|false $max = false): array
+    public function getPlayerTankStatFull(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
     {
         return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
     }
@@ -183,7 +184,7 @@ class GetWgApi implements UrlBuilderInterface
      * @param array<array-key, mixed> $extra
      * @return array<int|string, string>
      */
-    public function getPlayerAchiv(string $server, array $ids, array $types = [], array $extra = [], int|false $max = false): array
+    public function getPlayerAchiv(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
     {
         return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
     }

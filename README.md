@@ -80,7 +80,7 @@ $clanUrl = $api->getUrl('na', 'wot', 'clans/list', [
 ]);
 ```
 
-The generic builder validates the URL/path, realm, ID configuration and parameter value shapes. It does not know whether a method exists, requires POST/authentication or supports the fields/parameters you supply. WG validates those contracts. Use the separate WgAuth package for authentication POST operations; do not put access tokens into collector URLs.
+The generic builder validates the URL/path, realm, ID configuration and parameter value shapes. It does not know whether a method exists, requires POST/authentication or supports the fields/parameters you supply. WG validates those contracts. WgAuth provides authentication POST operations; authenticated HTTPS GET URLs are also supported by this builder. Redact access_token parameters in logs when using them.
 
 ### Add a batch endpoint
 
@@ -117,6 +117,8 @@ $stats = $api->getPlayerStat('eu', [500000001], ['statistics.random'], [
 ```
 
 Consume these URL maps with WgDataGetter or your own HTTP client. Do not log URLs containing application IDs or credentials.
+
+Authenticated HTTPS GET URLs remain supported, including access_token parameters. Query arguments are marked SensitiveParameter for PHP exception traces; callers must also redact token-bearing URLs in their own logs. WotClient and WgAuth use POST for their token-bearing operations. Configured API origins must come from trusted application configuration; endpoint paths cannot change the origin.
 
 ## Live verification scope
 
