@@ -7,185 +7,65 @@ namespace edrard\WgApi;
 use InvalidArgumentException;
 use SensitiveParameter;
 
-/** Existing method names over a validated, extensible URL builder. */
-class GetWgApi implements UrlBuilderInterface
+/** Builds one World of Tanks URL from one prepared parameter set. */
+final readonly class GetWgApi implements UrlBuilderInterface
 {
-    private string $prefix = '';
     private ApiConfiguration $configuration;
-    /** @var array<string, Endpoint> */
-    private array $endpoints;
 
-    /**
-     * @param array<array-key, mixed> $ids
-     * @param array<array-key, mixed> $config
-     */
-    public function __construct(array $ids = [], array $config = [])
+    /** @return array<string, string> */
+    public function __debugInfo(): array
     {
-        $this->configuration = new ApiConfiguration($ids, $config);
-        $this->endpoints = [
-            'getPlayerId' => new Endpoint('account/list', 'search', 1, numeric: false),
-            'getPlayerStat' => new Endpoint('account/info', 'account_id', 100),
-            'getPlayerTankStat' => new Endpoint('account/tanks', 'account_id', 100),
-            'getPlayerAchiv' => new Endpoint('account/achievements', 'account_id', 100),
-            'getPlayerTankStatFull' => new Endpoint('tanks/stats', 'account_id', 1),
-        ];
-    }
-
-    /** @deprecated Inject a logger in the HTTP/data layer instead. */
-    public function fullLog(): void
-    {
+        return ['configuration' => '[redacted]'];
     }
 
     /**
-     * @param array<array-key, mixed> $ids
+     * @param array<array-key, mixed> $applicationIds
+     * @param array<array-key, mixed> $baseUrls
      */
-    public function changeIds(array $ids = []): void
+    public function __construct(#[SensitiveParameter] array $applicationIds, array $baseUrls = [])
     {
-        $this->configuration->changeIds($ids);
-    }
-    public function changeUrlPrefix(string $prefix): void
-    {
-        $this->prefix = $prefix;
-    }
-    public function getUrlPrefix(): string
-    {
-        return $this->prefix;
+        $this->configuration = new ApiConfiguration($applicationIds, $baseUrls);
     }
 
-    public function registerEndpoint(string $name, Endpoint $endpoint): void
+    /** @param array<array-key, mixed> $parameters */
+    public function getUrl(string $server, string $type, string $target, #[SensitiveParameter] array $parameters = []): string
     {
-        if ($name === '') {
-            throw new InvalidArgumentException('Endpoint name must not be empty.');
-        }
-        $this->endpoints[$name] = $endpoint;
-    }
-
-    /**
-     * @param array<array-key, mixed> $fields
-     */
-    public function getUrl(string $server, string $type, string $target, #[SensitiveParameter] array $fields = []): string
-    {
-        Endpoint::validatePath($type);
-        Endpoint::validatePath($target);
+        self::validatePath($type);
+        self::validatePath($target);
         $realm = Realm::resolve($server);
-        $fields['application_id'] = $this->configuration->applicationId($realm);
-        $fields['language'] ??= $this->configuration->language($realm);
-        foreach ($fields as $key => &$value) {
-            if (!is_string($key) || $key === '' || preg_match('/[\x00-\x1f\x7f]/', $key)) {
+        $query = [];
+        foreach ($parameters as $name => $value) {
+            if (!is_string($name) || $name === '' || preg_match('/[\x00-\x1f\x7f]/', $name)) {
                 throw new InvalidArgumentException('Query parameter names must be non-empty strings.');
             }
+            if ($name === 'application_id' || $value === null) {
+                continue;
+            }
             if (is_array($value)) {
+                if (!array_is_list($value)) {
+                    throw new InvalidArgumentException('Query arrays must be lists.');
+                }
                 foreach ($value as $item) {
                     if (!is_scalar($item)) {
                         throw new InvalidArgumentException('Query lists must contain scalar values.');
                     }
                 }
                 $value = implode(',', $value);
-            } elseif ($value !== null && !is_scalar($value)) {
+            } elseif (!is_scalar($value)) {
                 throw new InvalidArgumentException('Query values must be scalar, null or lists.');
             }
+            $query[$name] = $value;
         }
-        unset($value);
+        $query['application_id'] = $this->configuration->applicationId($realm);
+
         return $this->configuration->baseUrl($realm).'/'.$type.'/'.$target.'/?'
-            .http_build_query($fields, '', '&', PHP_QUERY_RFC3986);
+            .http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
-    /**
-     * @param array<array-key, mixed> $ids
-     * @param array<array-key, mixed> $types
-     * @param array<array-key, mixed> $extra
-     * @return array<int|string, string>
-     */
-    public function prepareBatch(string $method, string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
+    private static function validatePath(string $path): void
     {
-        $endpoint = $this->endpoints[$method] ?? throw new InvalidArgumentException('Unknown endpoint: '.$method);
-        Realm::resolve($server);
-        if ($max !== false && $max < 1) {
-            throw new InvalidArgumentException('Batch size must be positive.');
+        if (!preg_match('~^[a-z0-9_]+(?:/[a-z0-9_]+)*$~D', $path)) {
+            throw new InvalidArgumentException('Invalid API path.');
         }
-        foreach ($ids as $id) {
-            if ($endpoint->numeric) {
-                if ((!is_int($id) && !is_string($id)) || !ctype_digit((string) $id) || filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
-                    throw new InvalidArgumentException('IDs must be positive integers without overflow.');
-                }
-            } elseif (!is_string($id) || trim($id) === '') {
-                throw new InvalidArgumentException('Search terms must be non-empty strings.');
-            }
-        }
-        if ($types !== []) {
-            $extra['extra'] = $types;
-        }
-        $urls = [];
-        foreach (array_chunk(array_values(array_unique($ids, SORT_REGULAR)), $max === false ? $endpoint->limit : min($max, $endpoint->limit)) as $index => $chunk) {
-            $fields = array_replace($extra, [$endpoint->parameter => $chunk]);
-            $urls[$this->prefix.$index] = $this->getUrl($server, $endpoint->api, $endpoint->path, $fields);
-        }
-        return $urls;
-    }
-
-    /**
-     * @param array<array-key, mixed> $ids
-     */
-    public function addServerBaseId(array &$ids, string $server): void
-    {
-        $base = $this->configuration->accountOffset(Realm::resolve($server));
-        $next = $ids;
-        foreach ($ids as $key => $id) {
-            if (!is_int($id) || $id < 0 || $id > PHP_INT_MAX - $base) {
-                throw new InvalidArgumentException('Relative account IDs must be non-negative integers without overflow.');
-            }
-            $next[$key] = $id + $base;
-        }
-        $ids = $next;
-    }
-
-    /**
-     * @param array<array-key, mixed> $names
-     * @param array<array-key, mixed> $extra
-     * @return array<int|string, string>
-     */
-    public function getPlayerId(string $server, array $names, #[SensitiveParameter] array $extra = [], int|false $max = false): array
-    {
-        return $this->prepareBatch(__FUNCTION__, $server, $names, [], $extra, $max);
-    }
-    /**
-     * @param array<array-key, mixed> $ids
-     * @param array<array-key, mixed> $types
-     * @param array<array-key, mixed> $extra
-     * @return array<int|string, string>
-     */
-    public function getPlayerStat(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
-    {
-        return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
-    }
-    /**
-     * @param array<array-key, mixed> $ids
-     * @param array<array-key, mixed> $types
-     * @param array<array-key, mixed> $extra
-     * @return array<int|string, string>
-     */
-    public function getPlayerTankStat(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
-    {
-        return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
-    }
-    /**
-     * @param array<array-key, mixed> $ids
-     * @param array<array-key, mixed> $types
-     * @param array<array-key, mixed> $extra
-     * @return array<int|string, string>
-     */
-    public function getPlayerTankStatFull(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
-    {
-        return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
-    }
-    /**
-     * @param array<array-key, mixed> $ids
-     * @param array<array-key, mixed> $types
-     * @param array<array-key, mixed> $extra
-     * @return array<int|string, string>
-     */
-    public function getPlayerAchiv(string $server, array $ids, array $types = [], #[SensitiveParameter] array $extra = [], int|false $max = false): array
-    {
-        return $this->prepareBatch(__FUNCTION__, $server, $ids, $types, $extra, $max);
     }
 }

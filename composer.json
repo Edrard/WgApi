@@ -1,6 +1,6 @@
 {
     "name": "edrard/wgapi",
-    "description": "Validated Wargaming API URL and batch builder for PHP 8.5",
+    "description": "Single-URL World of Tanks API builder for PHP 8.5",
     "require": {
         "php": "^8.5",
         "ext-ctype": "*",
@@ -39,7 +39,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.0.x-dev"
+            "dev-master": "3.0.x-dev"
         }
     },
     "homepage": "https://github.com/Edrard/WgApi",

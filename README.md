@@ -1,125 +1,74 @@
-# WgApi — PHP 8.5
+# WgApi
 
-Validated Wargaming World of Tanks URL and batch builder. This package does not perform network requests.
+PHP 8.5 library that builds **one World of Tanks GET URL** from a realm, API path and already prepared parameters. It performs no HTTP requests, retry, ID splitting, response parsing, or rate control.
 
-## Setup
-
-PHP 8.5 and Composer 2 are required.
-
-```sh
-composer install
-composer test
-composer analyse
-composer format:check
-```
+The next breaking release is **3.0.0 (unreleased worktree)**. The API namespace used in URLs is `wot`; this is not a numeric WG API version. The reviewed endpoint catalog in WotClient is dated 2026-09-27.
 
 ```php
 use edrard\WgApi\GetWgApi;
 
 $api = new GetWgApi(['eu' => $applicationId]);
-$api->changeUrlPrefix('stats_');
-$urls = $api->getPlayerStat('eu', [500000001, 500000002], [], [
-    'fields' => ['account_id', 'nickname', 'statistics.all'],
+$url = $api->getUrl('eu', 'wot', 'account/info', [
+    'account_id' => [500000001, 500000002],
+    'fields' => ['account_id', 'nickname'],
+    'extra' => ['statistics.random'],
+    'language' => 'de',
 ]);
+// One URL for exactly these two IDs. WgApi never creates another URL.
 ```
 
-Application IDs must come from the consuming application's configuration. No IDs are bundled. The second constructor argument supports partial overrides of id, url, lang and start. Base URLs must be HTTPS origins. changeIds() updates only the supplied realms.
-
-## Contract and migration
-
-- Realms: eu, na, asia. Legacy us and sea aliases remain supported. ru is rejected rather than silently routed to another provider.
-- Existing getPlayerId, getPlayerStat, getPlayerTankStat, getPlayerTankStatFull and getPlayerAchiv names remain.
-- account/info, account/tanks and account/achievements accept up to 100 accounts per URL; tanks/stats accepts one. Nickname search uses one search string per URL.
-- Results are keyed by prefix + index. Empty input produces no URLs; duplicate IDs are removed. IDs must be positive integers within the platform integer range.
-- max is a positive integer or false for the endpoint limit. Query strings use RFC 3986 encoding; array values become comma-separated lists.
-- Explicit batch IDs and configured application IDs take precedence over conflicting extra parameters.
-- addServerBaseId() applies only to relative enumeration IDs. Never use it on absolute IDs received from WG.
-- getUrl() supports additional API paths but does not validate endpoint-specific parameters. For another game's API, also configure its matching base origins.
-- Register batch strategies with registerEndpoint() and Endpoint. Endpoints use numeric IDs by default; set numeric: false for string searches. UrlBuilderInterface is the consumer boundary.
-- fullLog() is a deprecated no-op. URL generation never creates log files.
-
-Release: v2.0.0. This is a major-version migration, not a drop-in PHP 5.4 replacement. The Composer name is edrard/wgapi; use ^2.0 for stable releases. The development branch alias is 2.0.x-dev.
-
-Source: [Edrard/WgApi](https://github.com/Edrard/WgApi), Edrard, MIT. The new Laravel application has not adopted this package yet. Shared review and migration evidence: Docs/Reports/WG-LIBS-001_2026-09-26_review.md, relative to the shared workspace root.
-
-Official contracts: [account/info](https://developers.wargaming.net/reference/all/wot/account/info/), [account/tanks](https://developers.wargaming.net/reference/all/wot/account/tanks/), [account/achievements](https://developers.wargaming.net/reference/all/wot/account/achievements/), [tanks/stats](https://developers.wargaming.net/reference/all/wot/tanks/stats/).
-## Complete offline example
-
-```sh
-php examples/build-urls.php
-```
-
-This builds URLs and prints only request counts and the selected host. It performs no network requests and uses a harmless placeholder unless WG_APPLICATION_ID is configured.
-
-A single shared application ID can be configured for all three realms explicitly:
+`application_id` is always taken from configuration and cannot be overridden in query parameters. You may configure separate IDs for `eu`, `na`, and `asia`, or explicitly supply the same ID for each. Historical `us` and `sea` realm aliases resolve to `na` and `asia`. A base origin can be overridden only with a trusted HTTPS origin:
 
 ```php
-require __DIR__.'/vendor/autoload.php';
-
-use edrard\WgApi\Endpoint;
-use edrard\WgApi\GetWgApi;
-
-$id = getenv('WG_APPLICATION_ID') ?: throw new LogicException('Configure WG_APPLICATION_ID.');
-$api = new GetWgApi(array_fill_keys(['eu', 'na', 'asia'], $id));
+$api = new GetWgApi(
+    ['eu' => $euId, 'na' => $naId, 'asia' => $asiaId],
+    baseUrls: ['eu' => 'https://api.worldoftanks.eu'],
+);
 ```
 
-### Any additional public GET method
+Parameter arrays become comma-separated values, null parameters are omitted, and query strings use RFC 3986 encoding. The builder does **not** add `language` implicitly; the caller passes it for methods that support it. `fields`, `extra`, `access_token`, and other method parameters are forwarded without interpreting their meaning. Invalid paths, parameter shapes, realm names, and base origins raise `InvalidArgumentException` before a URL is returned. A missing application ID for a selected realm raises `LogicException`.
 
-Pass the namespace, method path and parameters from the official reference; no new wrapper class is needed:
+For a 250-ID request with K=25, the caller produces ten 25-ID groups and calls `getUrl()` ten times. WgApi does not know N, K, HTTP quotas, or whether the response succeeds. Keep token-bearing URLs out of logs and traces.
 
-```php
-$infoUrl = $api->getUrl('eu', 'wot', 'encyclopedia/info', [
-    'fields' => 'tanks_updated_at',
-]);
-$vehicleUrl = $api->getUrl('asia', 'wot', 'encyclopedia/vehicles', [
-    'page_no' => 1, 'limit' => 100,
-    'fields' => ['tank_id', 'name', 'tier'],
-]);
-$clanUrl = $api->getUrl('na', 'wot', 'clans/list', [
-    'limit' => 10, 'fields' => 'clan_id,tag',
-]);
-```
+MIT license. Package name: `edrard/wgapi`. After the 3.0.0 tag is published, consumers should use `^3.0`. Source: [Edrard/WgApi](https://github.com/Edrard/WgApi). Authentication POST operations belong to the separate [WgAuth](https://github.com/Edrard/WgAuth) package.
 
-The generic builder validates the URL/path, realm, ID configuration and parameter value shapes. It does not know whether a method exists, requires POST/authentication or supports the fields/parameters you supply. WG validates those contracts. WgAuth provides authentication POST operations; authenticated HTTPS GET URLs are also supported by this builder. Redact access_token parameters in logs when using them.
+Development checks: `composer test`, `composer analyse`, `composer format:check`, `composer validate --strict` on PHP 8.5.
 
-### Add a batch endpoint
+## Public API
 
-```php
-$api->registerEndpoint('clanInfo', new Endpoint(
-    path: 'clans/info',
-    parameter: 'clan_id',
-    limit: 100,
-));
-$api->changeUrlPrefix('clans_');
-$urls = $api->prepareBatch('clanInfo', 'eu', [1, 2, 3], extra: [
-    'fields' => ['clan_id', 'tag'],
-], max: 50);
-// Request keys: clans_0, clans_1, ...; IDs are grouped by the configured limit.
-```
+Load Composer's `vendor/autoload.php` before using these classes. The package declares PHP `^8.5`, `ext-ctype` and `ext-filter`. Examples use an application ID supplied by your application.
 
-### Existing wrapper map
+All classes below are in `edrard\WgApi`. Configuration and the builder are immutable.
 
-| Method | WG path | IDs per request |
+| Class / interface | Public operation | Result |
 | --- | --- | --- |
-| getPlayerId | account/list | One search string |
-| getPlayerStat | account/info | Up to 100 |
-| getPlayerTankStat | account/tanks | Up to 100 |
-| getPlayerAchiv | account/achievements | Up to 100 |
-| getPlayerTankStatFull | tanks/stats | One account |
+| `GetWgApi` | `__construct(array $applicationIds, array $baseUrls = [])` | Configures IDs and optional origins by realm. |
+| `UrlBuilderInterface`, implemented by `GetWgApi` | `getUrl(string $server, string $type, string $target, array $parameters = []): string` | One URL; no endpoint catalog validation or network I/O. |
+| `ApiConfiguration` | `__construct(array $applicationIds, array $baseUrls = [])` | Independently usable configuration with the same validation. |
+| `ApiConfiguration` | `applicationId(Realm $realm): string` | Configured ID; throws if absent. |
+| `ApiConfiguration` | `baseUrl(Realm $realm): string` | Configured or default HTTPS origin. |
+| `Realm` | `resolve(string $realm): Realm` | Case-insensitive realm or historical alias; surrounding whitespace is not accepted. |
 
-For player wrappers, the third argument is a list for WG's extra parameter, while ordinary query parameters go in the fourth argument. getPlayerId instead takes query parameters as its third argument:
+`Realm` has `EU` (`eu`), `NA` (`na`) and `ASIA` (`asia`) cases. Default origins are `https://api.worldoftanks.eu`, `https://api.worldoftanks.com` and `https://api.worldoftanks.asia` respectively. IDs need only be non-empty strings; this builder does not verify their validity with WG. Paths consist of lowercase letters, digits and underscores, with `/` between segments. Supply `wot` and `account/info`, without leading or trailing slashes.
+
+Parameters must have non-empty string names. Values may be scalars, null, or lists of scalars; objects and nested or associative arrays are rejected. An empty list becomes an empty query value. Scalar booleans use PHP query encoding (`1`/`0`); list values use PHP comma joining. Parameter insertion order is retained and the configured `application_id` is appended last.
+
+For example, with application ID `example-app`, this call:
 
 ```php
-$search = $api->getPlayerId('eu', ['tank'], ['limit' => 1, 'fields' => 'account_id']);
-$stats = $api->getPlayerStat('eu', [500000001], ['statistics.random'], [
-    'fields' => 'account_id,statistics.random',
-]);
+$url = (new GetWgApi(['eu' => 'example-app']))->getUrl(
+    'eu', 'wot', 'account/info', ['account_id' => [1, 2], 'language' => 'de'],
+);
 ```
 
-Consume these URL maps with WgDataGetter or your own HTTP client. Do not log URLs containing application IDs or credentials.
+returns exactly:
 
-Authenticated HTTPS GET URLs remain supported, including access_token parameters. Query arguments are marked SensitiveParameter for PHP exception traces; callers must also redact token-bearing URLs in their own logs. WotClient and WgAuth use POST for their token-bearing operations. Configured API origins must come from trusted application configuration; endpoint paths cannot change the origin.
+```text
+https://api.worldoftanks.eu/wot/account/info/?account_id=1%2C2&language=de&application_id=example-app
+```
 
-## Live verification scope
+Additional parameters are not filtered against WG documentation; validation of endpoint-specific names and values belongs to the caller. `__debugInfo()` redacts configuration on both classes, but the returned URL contains the actual parameters.
 
-On 2026-09-26 one owner-provided ID passed eight public methods in EU, NA and ASIA: account/list, account/info, account/tanks, account/achievements, tanks/stats, encyclopedia/info, encyclopedia/vehicles and clans/list. This checks all five wrappers and three additional generic GET paths. It does not verify every endpoint, every game, private data or historical external sources. The same tested ID worked in all three realms; other application IDs may have different restrictions.
+After publication, install with `composer require edrard/wgapi:^3.0`. Before publication, use a root Composer path repository pointing to this checkout with version `3.0.x-dev` and an explicit `^3.0@dev` requirement. Composer repository declarations belong in the consuming project's root configuration. See the three-package [local setup example](../WotClient/README.md#installation).
+
+The maintained executable example is `php examples/build-urls.php`; it needs no network and prints URL count and host. Files in the older singular `example/` directory are historical examples for obsolete interfaces and are not compatible with 3.x.

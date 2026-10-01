@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased — planned 2.0.1
+## Unreleased 3.0.0 — 2026-10-01
 
-- Preserve authenticated HTTPS GET support and protect query/extra arguments in exception traces with SensitiveParameter.
-- Reject control characters and backslashes in configured origins and mark query/extra arguments sensitive in stack traces.
-- Add security regression tests and PHP 8.5 CI with PSR-12, PHPStan, Composer and dependency audit checks.
+- Build exactly one URL per call; remove endpoint registration, ID splitting, wrapper methods, key prefixes and relative ID conversion.
+- Only inject configured application_id; forward explicitly supplied method parameters without adding language.
+- Keep realm and HTTPS origin validation; reject unsafe origin characters and protect URL parameters in traces.
+- Add contract and security tests, PHP 8.5 CI, PSR-12, PHPStan, Composer validation and dependency audit checks. This major version has not yet been tagged as a release.
 
 ## 2.0.0 — 2026-09-27
 
