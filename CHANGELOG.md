@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased 3.0.0 — 2026-10-01
+## Current development branch — dev-master
+
+- Consume current branch commits for internal use without release tags; document Git/path installation and explicit Composer updates.
 
 - Build exactly one URL per call; remove endpoint registration, ID splitting, wrapper methods, key prefixes and relative ID conversion.
 - Only inject configured application_id; forward explicitly supplied method parameters without adding language.
 - Keep realm and HTTPS origin validation; reject unsafe origin characters and protect URL parameters in traces.
-- Add contract and security tests, PHP 8.5 CI, PSR-12, PHPStan, Composer validation and dependency audit checks. This major version has not yet been tagged as a release.
+- Add contract and security tests, PHP 8.5 CI, PSR-12, PHPStan, Composer validation and dependency audit checks.
 
 ## 2.0.0 — 2026-09-27
 

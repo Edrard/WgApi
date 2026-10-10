@@ -4,7 +4,9 @@
 
 Канонічна документація та повний контракт: [README англійською](../../README.md).
 
-Після публікації версії 3.0.0 встановлення: `composer require edrard/wgapi:^3.0`. Поки версія не опублікована, використовуйте локальні Composer path repositories за прикладом у головному README.
+Для внутрішнього використання встановлюємо поточну гілку `dev-master`, без релізних тегів. Додайте VCS repository `https://github.com/Edrard/WgApi.git` у кореневий composer.json застосунку, потім виконайте `composer require edrard/wgapi:dev-master`. Повний приклад Git/path repositories для трьох пакетів є у [README WotClient](../../../WotClient/README.md#installation).
+
+`composer update edrard/wgapi --with-all-dependencies` підтягує актуальний коміт гілки. `composer install` відтворює коміт із composer.lock; під час запуску PHP автоматичного оновлення немає.
 
 ```php
 require 'vendor/autoload.php';

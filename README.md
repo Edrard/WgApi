@@ -4,7 +4,7 @@
 
 PHP 8.5 library that builds **one World of Tanks GET URL** from a realm, API path and already prepared parameters. It performs no HTTP requests, retry, ID splitting, response parsing, or rate control.
 
-The next breaking release is **3.0.0 (unreleased worktree)**. The API namespace used in URLs is `wot`; this is not a numeric WG API version. The reviewed endpoint catalog in WotClient is dated 2026-09-27.
+This internal library is consumed from **`dev-master`**, with no release tags required. The API namespace used in URLs is `wot`; this is not a numeric WG API version. The reviewed endpoint catalog in WotClient is dated 2026-09-27.
 
 ```php
 use edrard\WgApi\GetWgApi;
@@ -32,7 +32,7 @@ Parameter arrays become comma-separated values, null parameters are omitted, and
 
 For a 250-ID request with K=25, the caller produces ten 25-ID groups and calls `getUrl()` ten times. WgApi does not know N, K, HTTP quotas, or whether the response succeeds. Keep token-bearing URLs out of logs and traces.
 
-MIT license. Package name: `edrard/wgapi`. After the 3.0.0 tag is published, consumers should use `^3.0`. Source: [Edrard/WgApi](https://github.com/Edrard/WgApi). Authentication POST operations belong to the separate [WgAuth](https://github.com/Edrard/WgAuth) package.
+MIT license. Package name: `edrard/wgapi`; use `dev-master` for current development. Source: [Edrard/WgApi](https://github.com/Edrard/WgApi). Authentication POST operations belong to the separate [WgAuth](https://github.com/Edrard/WgAuth) package.
 
 Development checks: `composer test`, `composer analyse`, `composer format:check`, `composer validate --strict` on PHP 8.5.
 
@@ -71,7 +71,7 @@ https://api.worldoftanks.eu/wot/account/info/?account_id=1%2C2&language=de&appli
 
 Additional parameters are not filtered against WG documentation; validation of endpoint-specific names and values belongs to the caller. `__debugInfo()` redacts configuration on both classes, but the returned URL contains the actual parameters.
 
-After publication, install with `composer require edrard/wgapi:^3.0`. Before publication, use a root Composer path repository pointing to this checkout with version `3.0.x-dev` and an explicit `^3.0@dev` requirement. Composer repository declarations belong in the consuming project's root configuration. See the three-package [local setup example](../WotClient/README.md#installation).
+Add a VCS repository for `https://github.com/Edrard/WgApi.git` to the consuming project's root `composer.json`, then run `composer require edrard/wgapi:dev-master`. Release tags and Packagist publication are not required. `composer update edrard/wgapi --with-all-dependencies` fetches the current branch commit; `composer install` uses the commit already recorded in the consuming application's lock file. Repository declarations in dependencies are not inherited. See the complete three-package [Git and local setup examples](../WotClient/README.md#installation).
 
 The maintained executable example is `php examples/build-urls.php`; it needs no network and prints URL count and host. Files in the older singular `example/` directory are historical examples for obsolete interfaces and are not compatible with 3.x.
 
