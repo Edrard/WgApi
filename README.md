@@ -1,5 +1,7 @@
 # WgApi
 
+[Українська документація](docs/uk/README.md).
+
 PHP 8.5 library that builds **one World of Tanks GET URL** from a realm, API path and already prepared parameters. It performs no HTTP requests, retry, ID splitting, response parsing, or rate control.
 
 The next breaking release is **3.0.0 (unreleased worktree)**. The API namespace used in URLs is `wot`; this is not a numeric WG API version. The reviewed endpoint catalog in WotClient is dated 2026-09-27.
@@ -72,3 +74,7 @@ Additional parameters are not filtered against WG documentation; validation of e
 After publication, install with `composer require edrard/wgapi:^3.0`. Before publication, use a root Composer path repository pointing to this checkout with version `3.0.x-dev` and an explicit `^3.0@dev` requirement. Composer repository declarations belong in the consuming project's root configuration. See the three-package [local setup example](../WotClient/README.md#installation).
 
 The maintained executable example is `php examples/build-urls.php`; it needs no network and prints URL count and host. Files in the older singular `example/` directory are historical examples for obsolete interfaces and are not compatible with 3.x.
+
+## Logging boundary
+
+WgApi is a deterministic URL builder without HTTP execution, retries or operational state. It deliberately has no logger dependency or per-URL log output. Optional PSR-3 diagnostics belong to [WotClient](../WotClient/README.md#optional-psr-3-logging) and [WgDataGetter](../WgDataGetter/README.md#optional-psr-3-logging), where actual requests and retries take place. Do not log returned token-bearing URLs in a consuming application.
